@@ -1,0 +1,15 @@
+User 
+    Availability
+        Add  ✔
+        View ✔
+        Update
+        Delete
+
+Admin 
+    Event/Session
+        Add 
+        View ✔
+        Update
+        Delete
+
+
