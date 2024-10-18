@@ -2,7 +2,7 @@
 /* eslint-disable react/prop-types */
 import React, { useEffect, useState } from "react";
 import { Calendar, momentLocalizer } from "react-big-calendar";
-import moment  from "moment";
+import moment from "moment";
 import "react-big-calendar/lib/css/react-big-calendar.css";
 import axios from "axios";
 import { EventDetailsModal } from "../Modals/EventDetailsModal";
@@ -45,7 +45,7 @@ export const CalendarSchedule = ({ height }) => {
       .catch((error) => {
         console.error("Error fetching events:", error);
       });
-  },[email]);
+  }, [email]);
 
   // Event display
   const EventComponent = ({ event }) => {
@@ -101,53 +101,128 @@ export const CalendarSchedule = ({ height }) => {
 
   // View Availability----------------
   const handleViewAvailability = async () => {
-
-    try{
+    try {
       const response = await axios.get(
         `http://localhost:4545/users/${email}/availability`
-      );   // fetch availaiblity for selected slot
-      
-      console.log("Availabilitys: ", response.data);
-      if(response.status === 200){
+      ); // fetch availaiblity for selected slot
 
+      console.log("Availabilitys: ", response.data);
+      if (response.status === 200) {
         const availabilities = response.data.map((availability) => ({
-          title:"Available",
+          title: "Available",
           start: new Date(availability.start),
           end: new Date(availability.end),
           availabilityId: availability.availabilityId,
-          duration:"",
+          duration: "",
           eventType: "Available",
           attendees: [],
-        }))
+        }));
 
-        setEvents((prevState)=> [
-          ...prevState,
-          ...availabilities
-         ]);
+        setEvents((prevState) => [...prevState, ...availabilities]);
       }
-    }
-    catch(error){
+    } catch (error) {
       console.log("Error: ", error);
     }
   };
 
-  const eventStyleGetter = (eventData) =>{
+  // Available Event Styling
+  const eventStyleGetter = (eventData) => {
     if (eventData.title === "Available") {
       return {
         style: {
-          backgroundColor: '#D3F9D8', // Light green for availability
-          borderColor: '#28A745', // Darker green for emphasis
-          color: '#1E7D34', // Text color
-        }
+          backgroundColor: "#D3F9D8", // Light green for availability
+          borderColor: "#28A745", // Darker green for emphasis
+          color: "#1E7D34", // Text color
+        },
       };
     }
     return {};
-  }
+  };
+  // !View Availability-----------------
+
+  // Set(Add) Availability
+  const [reloadKey, setReloadKey] = useState(0);
+  const handleSetAvailability = async (allAvailabilities) => {
+    console.log("Sending Availabilities: ", allAvailabilities);
+    try {
+      const response = await axios.post(
+        "http://localhost:4545/users/availability",
+        allAvailabilities
+      );
+
+      if (response.status >= 200 && response.status < 300) {
+        console.log("Response: ", response.data);
+        toast.success("Availability added successfully");
+      }
+    } catch (error) {
+      if (error.response) {
+        console.log("Server Error Response: ", error.response.data);
+        toast.error(
+          `Error: ${
+            error.response.data ? error.response.data : "Something went wrong"
+          }`
+        );
+      } else {
+        console.log("Unknown Error: ", error);
+        toast.error("Something went wrong, please try again");
+      }
+    }
+    setReloadKey((prevKey) => prevKey + 1);
+  };
+
+  // Delete Availability:
+  const handleDeleteAvailability = async (availabilityId) => {
+    try {
+      const response = await axios.delete(
+        `http://localhost:4545/users/${user.email}/availability/${availabilityId}`
+      );
+
+      if (response.status === 200) {
+        console.log("Response data:", response.data);
+        toast.success("Availability deleted successfully");
+
+        // Referesh the calendar
+        setEvents((prevEvents) => {
+          return prevEvents.filter(
+            (event) => event.availabilityId !== availabilityId
+          );
+        });
+      }
+    } catch (error) {
+      console.log("Error: ", error); //debug log
+      toast.error("Failed to delete availability,please try again");
+    }
+  };
+
+  // Update availability
+
+
+  const handleUpdateAvailability = async (availability) => {
+    // const newAvailability = {
+    //   start:newAlbStart,
+    //   end:newAlbEnd
+    // }
+
+    // try {
+    //   const response = await axios.put(
+    //     `http://localhost:4545/users/${user.email}/updtAvailability/${availability.availabilityId}`,
+    //     newAvailability
+    //   );
+
+    //   if (response.status === 200) {
+    //     console.log("Response data:", response.data); //debug log
+    //     toast.success("Availability updated successfully");
+    //   }
+    // } catch (error) {
+    //   console.log("Error: ", error); //debug log
+    //   toast.error("Failed to update availability,please try again");
+    // }
+  };
 
   useEffect(() => {
     handleViewAvailability();
-  },[]);
-// !View Availability-----------------
+  }, [reloadKey]); //reloading calendar component only when availability is added/deleted.
+
   // -------------------------------------------------------------------------------------
   return (
     <div className="p-6  bg-gray-100 dark:bg-gray-800">
@@ -166,6 +241,7 @@ export const CalendarSchedule = ({ height }) => {
       </div>
 
       <Calendar
+        key={reloadKey}
         className="w-10/12 text-black  dark:text-white mx-auto"
         components={{
           event: EventComponent,
@@ -189,6 +265,8 @@ export const CalendarSchedule = ({ height }) => {
           isOpen={isModalOpen}
           onClose={() => setIsModalOpen(false)}
           event={selectedEvent}
+          onDeleteAvailability={handleDeleteAvailability}
+          onUpdateAvailability={handleUpdateAvailability}
         />
       )}
 
@@ -198,6 +276,7 @@ export const CalendarSchedule = ({ height }) => {
           isOpen={isAvailabilityModalOpen}
           onClose={handleCloseSlotModal}
           slotInfo={selectedSlot}
+          onSetAvailability={handleSetAvailability}
         />
       )}
     </div>

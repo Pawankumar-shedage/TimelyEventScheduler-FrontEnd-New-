@@ -3,7 +3,7 @@ User
         Add  ✔
         View ✔
         Update
-        Delete
+        Delete ✔
 
 Admin 
     Event/Session
@@ -12,4 +12,5 @@ Admin
         Update
         Delete
 
-
+Bugs/Issues
+    Calendar : Availabilities[] persistence issue.

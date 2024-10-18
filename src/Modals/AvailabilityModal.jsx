@@ -5,7 +5,7 @@ import React, { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
 import { toast } from "react-toastify";
 
-export const AvailabilityModal = ({ isOpen, onClose, slotInfo }) => {
+export const AvailabilityModal = ({ isOpen, onClose, slotInfo, onSetAvailability }) => {
   const slotStart = new Date(slotInfo.start);
   const slotEnd = new Date(slotInfo.end);
 
@@ -22,8 +22,6 @@ export const AvailabilityModal = ({ isOpen, onClose, slotInfo }) => {
     return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}.00`;
   };
 
-  // Handle availabilities
-  const [allAvailabilities, setAllAvailabilities] = useState([]);
 
   const [availabilityStartTime, setAvlStartTime] = useState("09:00");
   const [availabilityEndTime, setAvlEndTime] = useState("17:00");
@@ -69,21 +67,21 @@ export const AvailabilityModal = ({ isOpen, onClose, slotInfo }) => {
     }
   };
 
-  // add availability**
+  // add each availability**
+  const [shouldSendRequest, setShouldSendRequest] = useState(false);
+
   const handleAddAvailability = async (e) => {
     e.preventDefault();
-
+    const newAvailabilities = [];
     // Availability for each day in slots[].
     for (let i = 0; i < slotInfo.slots.length; i++) {
       const slot = slotInfo.slots[i];
-      console.log(slot);
-
+      // console.log(slot);
       let startDateTime = formatLocalDateTime(new Date(slot)); //string
       let endDateTime = formatLocalDateTime(new Date(slot));
 
       const [stHours, stMinutes] = availabilityStartTime.split(":");
       const [endHours, endMinutes] = availabilityEndTime.split(":");
-
       // Updating time only of slot start and end
       const newStartDateTime =
         startDateTime.substring(0, 11) +
@@ -106,64 +104,17 @@ export const AvailabilityModal = ({ isOpen, onClose, slotInfo }) => {
         end: newEndDateTime,
       };
 
-      console.log("availability: ", availability);
-      // Add availability to the allAvailabilities array[].
-
-      handleStateUpdate(availability);
+      console.log("Availability to add: ", availability);
+      // Add each availability/slot to the allAvailabilities array[].
+      newAvailabilities.push(availability);
     }
-  };
 
-  const [shouldSendRequest, setShouldSendRequest] = useState(false);
-  const handleStateUpdate = (availability) => {
-    setAllAvailabilities((prevState) => [...prevState, availability]);
-    setShouldSendRequest(true);
+    onSetAvailability(newAvailabilities);  //Send to backend
+    console.log("Sent request to backend: ", newAvailabilities);
+    onClose();    //Close modal after adding availablity
   };
 
   const [submitDisabled, setSubmitDisabled] = useState(false);
-
-  // Post Availabilities to backend
-  useEffect(() => {
-    if (shouldSendRequest == true && allAvailabilities.length > 0) {
-      const sendData = async () => {
-        try {
-          console.log("Sending Availabilities: ", allAvailabilities);
-          // now push Availability[] to the db.
-
-          const response = await axios.post(
-            "http://localhost:4545/users/availability",
-            allAvailabilities
-          );
-
-          if (response.status >= 200 && response.status < 300) {
-            console.log("Response: ", response.data);
-            toast.success("Availability added successfully");
-            setAllAvailabilities([]);   //clear availability arr[]
-          } else {
-            console.log("Response: ", response.data);
-            toast.error("Failed to add availability,please try again");
-            setAllAvailabilities([]);
-          }
-        } catch (error) {
-          if (error.response) {
-            console.log("Server Error Response: ", error.response.data);
-            toast.error(
-              `Error: ${
-                error.response.data
-                  ? error.response.data
-                  : "Something went wrong"
-              }`
-            );
-          } else {
-            console.log("Unknown Error: ", error);
-            toast.error("Something went wrong, please try again");
-          }
-          setAllAvailabilities([]);   // Clear availability arr[]
-        }
-      };
-
-      sendData();
-    }
-  }, [allAvailabilities, shouldSendRequest]);
 
   // Slot
   const getOrdinal = (day) => {
@@ -191,11 +142,11 @@ export const AvailabilityModal = ({ isOpen, onClose, slotInfo }) => {
   const formattedSlotEndDate = formatFullDate(slotEnd);
 
   //   -----------------------------------------------------
+  if (!isOpen) return null; //***
   return (
     <div
       id="default-modal"
       tabIndex="-1"
-      // aria-hidden="true"
       className=" w-full mx-auto  bg-gray-200 bg-opacity-20 backdrop-blur-sm overflow-y-auto overflow-x-hidden fixed top-0 right-0 left-0 z-50 justify-center items-center  md:inset-0 h-[calc(100%-1rem)] max-h-full"
     >
       <div className="mt-36 mx-auto relative p-4 w-full max-w-2xl max-h-full">
