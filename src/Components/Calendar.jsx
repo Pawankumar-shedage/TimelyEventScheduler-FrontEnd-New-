@@ -25,7 +25,7 @@ export const CalendarSchedule = ({ height }) => {
 
   const email = user.email;
 
-  //fetch events/sessions from backend
+  //fetch events/availabilities/sessions from backend
   useEffect(() => {
     axios
       .get(`http://localhost:4545/sessions/${email}`)
@@ -45,7 +45,7 @@ export const CalendarSchedule = ({ height }) => {
       .catch((error) => {
         console.error("Error fetching events:", error);
       });
-  }, [email]);
+  }, []);
 
   // Event display
   const EventComponent = ({ event }) => {
@@ -144,6 +144,8 @@ export const CalendarSchedule = ({ height }) => {
   const [reloadKey, setReloadKey] = useState(0);
   const handleSetAvailability = async (allAvailabilities) => {
     console.log("Sending Availabilities: ", allAvailabilities);
+
+    setEvents((events) => [...events, ...allAvailabilities]);
     try {
       const response = await axios.post(
         "http://localhost:4545/users/availability",
