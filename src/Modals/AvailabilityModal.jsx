@@ -67,8 +67,7 @@ export const AvailabilityModal = ({ isOpen, onClose, slotInfo, onSetAvailability
     }
   };
 
-  // add each availability**
-  const [shouldSendRequest, setShouldSendRequest] = useState(false);
+
 
   const handleAddAvailability = async (e) => {
     e.preventDefault();
