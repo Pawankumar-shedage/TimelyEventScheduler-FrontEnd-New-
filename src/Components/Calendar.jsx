@@ -1,13 +1,12 @@
 /* eslint-disable no-unused-vars */
 /* eslint-disable react/prop-types */
-import React, { useEffect, useState } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { Calendar, momentLocalizer } from "react-big-calendar";
 import moment from "moment";
 import "react-big-calendar/lib/css/react-big-calendar.css";
 import axios from "axios";
 import { EventDetailsModal } from "../Modals/EventDetailsModal";
 import { AvailabilityModal } from "../Modals/AvailabilityModal";
-import { InfoModal } from "../Modals/InfoModal";
 import { toast } from "react-toastify";
 import { CustomCalendarToolbar } from "./CustomCalendarToolbar";
 import { useSelector } from "react-redux";
@@ -20,6 +19,7 @@ export const CalendarSchedule = ({ height }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedSlot, setSelectedSlot] = useState(null);
   const [isAvailabilityModalOpen, setIsAvailabilityModalOpen] = useState(false);
+  const [reloadKey, setReloadKey] = useState(0);  //for fetching availabilities, when needed
 
   const { user, isLoggedIn } = useSelector((state) => state.auth);
 
@@ -100,30 +100,42 @@ export const CalendarSchedule = ({ height }) => {
   };
 
   // View Availability----------------
-  const handleViewAvailability = async () => {
+  const handleViewAvailability =useCallback(async () => {
     try {
       const response = await axios.get(
         `http://localhost:4545/users/${email}/availability`
       ); // fetch availaiblity for selected slot
 
-      console.log("Availabilitys: ", response.data);
+      console.log("Availabilities: ", response.data);
       if (response.status === 200) {
         const availabilities = response.data.map((availability) => ({
           title: "Available",
           start: new Date(availability.start),
           end: new Date(availability.end),
           availabilityId: availability.availabilityId,
-          duration: "",
+          duration: availability.duration,
           eventType: "Available",
-          attendees: [],
+          attendees: availability.attendees,
         }));
 
-        setEvents((prevState) => [...prevState, ...availabilities]);
+        setEvents((prevState) => {
+          const updatedEvents = [...prevState, ...availabilities].filter(
+            (event, index, self) =>
+              index ===
+              self.findIndex((e) => e.availabilityId === event.availabilityId)
+          );
+          return updatedEvents;
+        });
       }
     } catch (error) {
       console.log("Error: ", error);
     }
-  };
+  },[email]);
+
+   // Update availability
+   useEffect(() => {
+    handleViewAvailability();
+  }, [handleViewAvailability,reloadKey]); //reloading calendar component only when availability is added/deleted.
 
   // Available Event Styling
   const eventStyleGetter = (eventData) => {
@@ -141,11 +153,10 @@ export const CalendarSchedule = ({ height }) => {
   // !View Availability-----------------
 
   // Set(Add) Availability
-  const [reloadKey, setReloadKey] = useState(0);
   const handleSetAvailability = async (allAvailabilities) => {
     console.log("Sending Availabilities: ", allAvailabilities);
 
-    setEvents((events) => [...events, ...allAvailabilities]);
+    // setEvents((events) => [...events, ...allAvailabilities]);
     try {
       const response = await axios.post(
         "http://localhost:4545/users/availability",
@@ -197,33 +208,27 @@ export const CalendarSchedule = ({ height }) => {
   };
 
   // Update availability
-
-
   const handleUpdateAvailability = async (availability) => {
-    // const newAvailability = {
-    //   start:newAlbStart,
-    //   end:newAlbEnd
-    // }
+    console.log("Received availability: ", availability);
+    try {
+      const response = await axios.put(
+        `http://localhost:4545/users/${user.email}/updtAvailability/${availability.availabilityId}`,
+        availability
+      );
 
-    // try {
-    //   const response = await axios.put(
-    //     `http://localhost:4545/users/${user.email}/updtAvailability/${availability.availabilityId}`,
-    //     newAvailability
-    //   );
+      if (response.status === 200) {
+        console.log("Response data:", response.data); //debug log
+        toast.success("Availability updated successfully");
 
-    //   if (response.status === 200) {
-    //     console.log("Response data:", response.data); //debug log
-    //     toast.success("Availability updated successfully");
-    //   }
-    // } catch (error) {
-    //   console.log("Error: ", error); //debug log
-    //   toast.error("Failed to update availability,please try again");
-    // }
+        setReloadKey((prevKey) => prevKey + 1);//fetch updated availability.
+      }
+    } catch (error) {
+      console.log("Error: ", error); //debug log
+      toast.error(error.response.data, " please try again");
+    }
   };
 
-  useEffect(() => {
-    handleViewAvailability();
-  }, [reloadKey]); //reloading calendar component only when availability is added/deleted.
+
 
   // -------------------------------------------------------------------------------------
   return (

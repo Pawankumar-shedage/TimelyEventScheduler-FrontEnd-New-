@@ -3,9 +3,11 @@
 
 import axios from "axios";
 import { Button, Modal } from "flowbite-react";
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { useSelector } from "react-redux";
 import { toast } from "react-toastify";
+import { InfoModal } from "./InfoModal";
+import { ConfirmationModal } from "./ConfirmationModal";
 
 export const EventDetailsModal = ({
   isOpen,
@@ -16,40 +18,64 @@ export const EventDetailsModal = ({
 }) => {
   // current user.
   const { user, isLoggedIn } = useSelector((state) => state.auth);
+
   const { title, start, end, duration, attendees, eventType } = event;
+  const [localEvent, setLocalEvent] = useState({ ...event });
+
+  // update local event, when event is changed
+  useEffect(() => {
+    if (event) setLocalEvent({ ...event });
+  }, [event]);
 
   console.log("Event Details Modal", event);
-  console.log("Event Details Modal", event.end.toLocaleTimeString().slice(0,5));
+  // console.log(
+  //   "Event Details Modal",
+  //   event.end.toLocaleTimeString().slice(0, 5)
+  // );
 
   const handleSendEmail = (email) => {
     console.log("Email", email);
     window.open(`mailto:${email}`, "_blank");
   };
 
-  const formattedStartTime = new Date(start).toLocaleTimeString("en-US", {
-    day: "numeric",
-    month: "short",
-    hour: "numeric",
-    minute: "numeric",
-    hour12: true,
-  }); // "9:30 AM".
-  const formattedEndTime = new Date(end).toLocaleTimeString("en-US", {
-    day: "numeric",
-    month: "short",
-    hour: "numeric",
-    minute: "numeric",
-    hour12: true,
-  });
+  const formattedStartTime = new Date(localEvent.start).toLocaleTimeString(
+    "en-US",
+    {
+      day: "numeric",
+      month: "short",
+      hour: "numeric",
+      minute: "numeric",
+      hour12: true,
+    }
+  ); // "9:30 AM".
+  const formattedEndTime = new Date(localEvent.end).toLocaleTimeString(
+    "en-US",
+    {
+      day: "numeric",
+      month: "short",
+      hour: "numeric",
+      minute: "numeric",
+      hour12: true,
+    }
+  );
 
-  // Update Availability -Event
-  const fmtNewSt = new Date(start).toLocaleTimeString().slice(0, 5);
-  const fmtNewEnd = new Date(end).toLocaleTimeString().slice(0, 5);
+  const [newAvlStartTime, setNewAvlStartTime] = useState(""); //previous value
+  const [newAvlEndTime, setNewAvlEndTime] = useState("");
 
-  console.log("new avl start,end",fmtNewSt, fmtNewEnd);
-  
+  useEffect(() => {
+    if (localEvent) {
+      // Update Availability -Event
+      const fmtNewSt = new Date(localEvent.start)
+        .toLocaleTimeString()
+        .slice(0, 5);
+      const fmtNewEnd = new Date(localEvent.end)
+        .toLocaleTimeString()
+        .slice(0, 5);
 
-  const [newAvlStartTime, setNewAvlStartTime] = useState(fmtNewSt); //previous value
-  const [newAvlEndTime, setNewAvlEndTime] = useState(fmtNewEnd);
+      setNewAvlStartTime(fmtNewSt);
+      setNewAvlEndTime(fmtNewEnd);
+    }
+  }, [localEvent]);
 
   const [submitDisabled, setSubmitDisabled] = useState(false);
 
@@ -58,7 +84,6 @@ export const EventDetailsModal = ({
     start: newAvlStartTime,
     end: newAvlEndTime,
   });
-
 
   const handleTime = (event) => {
     const { name, value } = event.target;
@@ -99,21 +124,67 @@ export const EventDetailsModal = ({
         setNewAvlEndTime(`${hours}:${minutes}`);
       }
     }
+
+    // Set object
+    setNewAvailabilityData({
+      availabilityId: localEvent.availabilityId,
+      start: newAvlStartTime,
+      end: newAvlEndTime,
+    });
   };
 
-  console.log("New Availability Data::: ", newAvailabilityData);
+  const formatLocalDateTime = (date) => {
+    const year = date.getFullYear();
+    const month = String(date.getMonth() + 1).padStart(2, "0");
+    const day = String(date.getDate()).padStart(2, "0");
+    const hours = String(date.getHours()).padStart(2, "0");
+    const minutes = String(date.getMinutes()).padStart(2, "0");
+    const seconds = String(date.getSeconds()).padStart(2, "0");
 
+    return `${year}-${month}-${day}T${hours}:${minutes}:${seconds}.00`;
+  };
 
-  
   const updateAvailability = (e) => {
     e.preventDefault();
     console.log("Send updated availability", e);
+    let startDateTime = formatLocalDateTime(new Date(localEvent.start)); //string
+    let endDateTime = formatLocalDateTime(new Date(localEvent.end));
+
+    console.log(startDateTime, newAvlStartTime);
     
-    // onUpdateAvailability(newAvailabilityData);
-    // onClose();
+
+    const [stHours, stMinutes] = newAvlStartTime.split(":");
+    const [endHours, endMinutes] = newAvlEndTime.split(":");
+    // Updating time only of slot start and end
+    const newStartDateTime =
+      startDateTime.substring(0, 11) +
+      stHours.toString().padStart(2, "0") +
+      ":" +
+      stMinutes.toString().padStart(2, "0") +
+      startDateTime.substring(16);
+
+    const newEndDateTime =
+      endDateTime.substring(0, 11) +
+      endHours.toString().padStart(2, "0") +
+      ":" +
+      endMinutes.toString().padStart(2, "0") +
+      endDateTime.substring(16);
+
+    const availability = {
+      availabilityId: localEvent.availabilityId,
+      start: newStartDateTime,
+      end: newEndDateTime,
+    };
+
+    console.log("Updated Availability-->: ", availability);
+    
+
+    onUpdateAvailability(availability);
+    onClose();
   };
 
   // Delete Availability -Event
+
   const deleteAvailability = () => {
     console.log(
       "Delete Availability: ",
@@ -121,9 +192,20 @@ export const EventDetailsModal = ({
       "User: ",
       user.email
     );
+    setOpenInfoModal(true);
+  };
+
+  const handleConfirmDelete = () => {
+
+    console.log("handle confirm,Delete Availability: ", event.availabilityId);
+    
+    setOpenInfoModal(false);
+
     onDeleteAvailability(event.availabilityId);
     onClose();
   };
+
+  const [openInfoModal, setOpenInfoModal] = useState(false);
 
   if (!isOpen) return null; //***
   // ---------------------------------------------------------------------
@@ -170,7 +252,7 @@ export const EventDetailsModal = ({
               // {/* Availability Details */}
               <div className="space-y-4 text-black dark:text-white">
                 <p>
-                  <strong>Event Type:</strong> {eventType}
+                  <strong>Event Type:</strong> {localEvent.eventType}
                 </p>
                 <form onSubmit={updateAvailability}>
                   <div className="mb-2">
@@ -247,16 +329,18 @@ export const EventDetailsModal = ({
                       <button
                         type="submit"
                         // onClick={updateAvailability}
+                        disabled={submitDisabled}
                         className={`${
-                          submitDisabled ? "cursor-not-allowed" : ""
-                        } py-2.5 px-5 ms-3 text-sm font-medium text-gray-800 focus:outline-none bg-white rounded-lg border border-gray-200 hover:bg-gray-300 hover:text-blue-700 focus:z-10 focus:ring-4 focus:ring-gray-100 dark:focus:ring-gray-700 dark:bg-gray-800 dark:text-gray-100 dark:border-gray-600 dark:hover:text-white dark:hover:bg-gray-700 `}
+                          submitDisabled ? "cursor-not-allowed opacity-50" : ""
+                        } py-2.5 px-5 ms-3 text-sm font-medium text-gray-800 focus:outline-none bg-white rounded-lg border border-gray-500 hover:bg-gray-300 hover:text-blue-700 focus:z-10 focus:ring-4 focus:ring-gray-100 dark:focus:ring-gray-700 dark:bg-gray-800 dark:text-gray-100 dark:border-gray-600 dark:hover:text-white dark:hover:bg-gray-700 `}
                       >
                         Update availability
                       </button>
 
                       <button
+                        type="button"
                         onClick={deleteAvailability}
-                        className="py-2.5 px-5 ms-3 text-sm font-medium text-gray-800 focus:outline-none bg-white rounded-lg border border-gray-200 hover:bg-gray-300 hover:text-blue-700 focus:z-10 focus:ring-4 focus:ring-gray-100 dark:focus:ring-gray-700 dark:bg-gray-800 dark:text-gray-100 dark:border-gray-600 dark:hover:text-white dark:hover:bg-gray-700"
+                        className="py-2.5 px-5 ms-3 text-sm font-medium text-gray-800 focus:outline-none bg-white rounded-lg border border-gray-500 hover:bg-gray-300 hover:text-blue-700 focus:z-10 focus:ring-4 focus:ring-gray-100 dark:focus:ring-gray-700 dark:bg-gray-800 dark:text-gray-100 dark:border-gray-600 dark:hover:text-white dark:hover:bg-gray-700"
                       >
                         Delete availability
                       </button>
@@ -318,6 +402,15 @@ export const EventDetailsModal = ({
           </div>
         </div>
       </div>
+      {/* Delete confirmation msg */}
+      {openInfoModal && (
+        <ConfirmationModal
+          title={"Are you sure you want to delete this availability?"}
+          msgType={"danger"}
+          onConfirm={handleConfirmDelete}
+          onClose={() => setOpenInfoModal(false)}
+        />
+      )}
     </div>
   );
 };

@@ -2,22 +2,20 @@
 /* eslint-disable no-unused-vars */
 import React from "react";
 
-export const InfoModal = ({ title }) => {
-  const onClose = () => {
-    console.log("Modal Closed");
-  };
+export const ConfirmationModal = ({ title,msgType, onConfirm, onClose }) => {
   return (
     <div
       id="default-modal"
       tabIndex="-1"
       aria-hidden="true"
-      className=" w-full mx-auto  bg-gray-200 bg-opacity-20 backdrop-blur-sm overflow-y-auto overflow-x-hidden fixed top-0 right-0 left-0 z-50 justify-center items-center  md:inset-0 h-[calc(100%-1rem)] max-h-full"
+      className=" w-full mx-auto  bg-gray-200 bg-opacity-20 backdrop-blur-sm overflow-y-auto overflow-x-hidden fixed top-0 right-0 left-0 z-50 justify-center items-center  md:inset-0 h-[calc(100%)] max-h-full"
     >
       <div className="mt-40 mx-auto relative p-4 w-full max-w-2xl max-h-full">
         {/* <!-- Modal content --> */}
-        <div className="relative bg-white rounded-lg shadow dark:bg-gray-700">
+        <div className="relative bg-white mt-24 rounded-lg shadow dark:bg-gray-700">
           {/* <!-- Modal header --> */}
           <div className="flex items-center justify-between p-4 md:p-5 border-b rounded-t dark:border-gray-600">
+            {/* Message */}
             <h3 className="text-xl font-semibold text-gray-900 dark:text-white">
               {title}
             </h3>
@@ -46,12 +44,20 @@ export const InfoModal = ({ title }) => {
               <span className="sr-only">Close modal</span>
             </button>
           </div>
-          {/* <!-- Modal body --> */}
-          <div className="p-4 md:p-5 space-y-4">
-            {/* <p className='text-center'>{title}</p> */}
-          </div>
           {/* <!-- Modal footer --> */}
           <div className="flex justify-center p-4 md:p-5 border-t border-gray-200 rounded-b dark:border-gray-600">
+            {/* Sure btn */}
+            <button
+              type="button"
+              onClick={() => {
+                console.log("Sure clicked");
+                onConfirm();
+              }}
+              className={`${msgType === "danger" ? "dark:bg-red-600 bg-red-600 ":"" } py-2.5 px-5 ms-3 text-sm font-medium text-white focus:outline-none  rounded-lg border border-gray-200 hover:bg-red-500 hover:text-white focus:z-10 focus:ring-4 focus:ring-gray-100 dark:focus:ring-gray-700  dark:text-white dark:border-gray-600 dark:hover:text-white dark:hover:bg-red-500`}
+            >
+              Sure
+            </button>
+            {/* Close btn */}
             <button
               onClick={onClose}
               data-modal-hide="default-modal"
