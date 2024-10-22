@@ -156,7 +156,7 @@ export const CalendarSchedule = ({ height }) => {
   const handleSetAvailability = async (allAvailabilities) => {
     console.log("Sending Availabilities: ", allAvailabilities);
 
-    // setEvents((events) => [...events, ...allAvailabilities]);
+    setEvents((events) => [...events, ...allAvailabilities]);
     try {
       const response = await axios.post(
         "http://localhost:4545/users/availability",
