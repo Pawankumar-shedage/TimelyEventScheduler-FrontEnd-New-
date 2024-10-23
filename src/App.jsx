@@ -8,6 +8,7 @@ import { CalendarSchedule } from './Components/Calendar'
 import { AdminDashboard } from './Pages/AdminDashboard'
 import { Login } from './Pages/Login'
 import { Signup } from './Pages/SignUp'
+import { MyEvents } from './Components/MyEvents'
 
 function App() {
   return (
@@ -20,6 +21,8 @@ function App() {
           <Route path="/admin" element={<AdminDashboard />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Signup />} />
+          <Route path="/myevents" element={<MyEvents  />} />
+
         </Routes>
       </Router>
 

@@ -1,3 +1,4 @@
+
 export const CustomCalendarToolbar = (toolbar) => {
   const goToBack = () => {
     toolbar.onNavigate("PREV");
@@ -16,17 +17,17 @@ export const CustomCalendarToolbar = (toolbar) => {
   };
 
   const { date } = toolbar;
+  // console.log("Toolbar date: ", date.toLocaleString());
+  
   const currentDate = date.toLocaleString("en-US", {
-    month: "long",
-    year: "numeric",
+    month: "short",
+    day: "numeric",
+    // year:"2-digit",
+    weekday:"long"
   });
 
   return (
     <>
-      <p className="text-center md:text-2xl mb-1 dark:text-white ">
-        {currentDate}
-      </p>
-
       {/* Toolbar buttons */}
       <div className="flex  flex-row justify-between mb-4 p-2">
         {/* Navigation buttons */}
@@ -51,7 +52,12 @@ export const CustomCalendarToolbar = (toolbar) => {
           </button>
         </div>
 
-        {/* View buttons: Day, Week, Month */}
+        <div>
+          <p className="text-center   dark:text-white ">
+            {currentDate}
+          </p>
+        </div>
+        {/* View buttons: Day, Week, Month, Agenda */}
         <div>
           <button
             onClick={() => setView("day")}
@@ -67,9 +73,15 @@ export const CustomCalendarToolbar = (toolbar) => {
           </button>
           <button
             onClick={() => setView("month")}
-            className="mt-2 bg-gray-300 text-black px-4 py-1 rounded hover:bg-gray-400"
+            className="mt-2 bg-gray-300 text-black px-4 py-1 rounded mr-2 hover:bg-gray-400"
           >
             Month
+          </button>
+          <button
+            onClick={() => setView("agenda")}
+            className="mt-2 bg-gray-300 text-black px-4 py-1 rounded hover:bg-gray-400"
+          >
+            Agenda
           </button>
         </div>
       </div>

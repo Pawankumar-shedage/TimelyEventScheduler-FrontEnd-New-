@@ -10,6 +10,8 @@ import { AvailabilityModal } from "../Modals/AvailabilityModal";
 import { toast } from "react-toastify";
 import { CustomCalendarToolbar } from "./CustomCalendarToolbar";
 import { useSelector } from "react-redux";
+import { MyEvents } from "./MyEvents";
+import { useNavigate } from "react-router-dom";
 
 const localizer = momentLocalizer(moment);
 // /events
@@ -19,11 +21,13 @@ export const CalendarSchedule = ({ height }) => {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedSlot, setSelectedSlot] = useState(null);
   const [isAvailabilityModalOpen, setIsAvailabilityModalOpen] = useState(false);
-  const [reloadKey, setReloadKey] = useState(0);  //for fetching availabilities, when needed
-
+  const [reloadKey, setReloadKey] = useState(0); //for fetching availabilities, when needed
+  const navigate = useNavigate();
   const { user, isLoggedIn } = useSelector((state) => state.auth);
 
   const email = user.email;
+
+  const [userEvents, setUserEvents] = useState([...events]);
 
   //fetch events/availabilities/sessions from backend
   useEffect(() => {
@@ -41,6 +45,8 @@ export const CalendarSchedule = ({ height }) => {
           end: new Date(event.end),
         }));
         setEvents(backendEvents); // Store fetched events in state
+
+        setUserEvents(backendEvents);
       })
       .catch((error) => {
         console.error("Error fetching events:", error);
@@ -59,7 +65,7 @@ export const CalendarSchedule = ({ height }) => {
   };
 
   const handleSelectEvent = (event) => {
-    console.log("Selected event", event);
+    // console.log("Selected event", event);
     setSelectedEvent(event);
     setIsModalOpen(true);
 
@@ -77,7 +83,7 @@ export const CalendarSchedule = ({ height }) => {
     setIsAvailabilityModalOpen(false);
   };
 
-  // Custom Calendar styles
+  // -----Custom Calendar styles
   const dayPropGetter = (date) => {
     const today = new Date(); // Get the current date
 
@@ -99,60 +105,73 @@ export const CalendarSchedule = ({ height }) => {
     return {};
   };
 
+  const handleCalendarView = (view) => {
+    console.log("View: ", view);
+  };
+
   // View Availability----------------
-  const handleViewAvailability =useCallback(async () => {
-    try {
-      const response = await axios.get(
-        `http://localhost:4545/users/${email}/availability`
-      ); // fetch availaiblity for selected slot
 
-      console.log("Availabilities: ", response.data);
-      if (response.status === 200) {
-        const availabilities = response.data.map((availability) => ({
-          title: "Available",
-          start: new Date(availability.start),
-          end: new Date(availability.end),
-          availabilityId: availability.availabilityId,
-          duration: availability.duration,
-          eventType: "Available",
-          attendees: availability.attendees,
-        }));
+  // Update availability
+  useEffect(() => {
+    const handleViewAvailability = async () => {
+      try {
+        const response = await axios.get(
+          `http://localhost:4545/users/${email}/availability`
+        ); // fetch availaiblity for selected slot
 
-        setEvents((prevState) => {
-          const updatedEvents = [...prevState, ...availabilities].filter(
-            (event, index, self) =>
-              index ===
-              self.findIndex((e) => e.availabilityId === event.availabilityId)
-          );
-          return updatedEvents;
-        });
+        console.log("Availabilities: ", response.data);
+        if (response.status === 200) {
+          const availabilities = response.data.map((availability) => ({
+            title: "Available",
+            start: new Date(availability.start),
+            end: new Date(availability.end),
+            availabilityId: availability.availabilityId,
+            duration: availability.duration,
+            eventType: "Available",
+            attendees: availability.attendees,
+          }));
+
+          setEvents((prevState) => {
+            const updatedEvents = [...prevState, ...availabilities].filter(
+              (event, index, self) =>
+                index ===
+                self.findIndex((e) => e.availabilityId === event.availabilityId)
+            );
+            return updatedEvents;
+          });
+        }
+      } catch (error) {
+        console.log("Error: ", error);
       }
-    } catch (error) {
-      console.log("Error: ", error);
-    }
-  },[email]);
-
-   // Update availability
-   useEffect(() => {
+    };
     handleViewAvailability();
-  }, [handleViewAvailability,reloadKey]); //reloading calendar component only when availability is added/deleted.
+  }, [email]); //reloading calendar component only when availability is added/deleted.
 
   // Available Event Styling
   const eventStyleGetter = (eventData) => {
     if (eventData.title === "Available") {
       return {
         style: {
-          backgroundColor: "#D3F9D8", // Light green for availability
+          backgroundColor: "rgba(211, 249, 216, 0.7)", // Light green for availability
           borderColor: "#28A745", // Darker green for emphasis
           color: "#1E7D34", // Text color
+          zIndex: 1,
         },
       };
     }
-    return {};
+
+    return {
+      style: {
+        backgroundColor: "#3BF2F6",
+        borderColor: "#28A745",
+        color: "#000",
+        zIndex: 2,
+      },
+    };
   };
   // !View Availability-----------------
 
-  // Set(Add) Availability
+  // Set(Add Availability)
   const handleSetAvailability = async (allAvailabilities) => {
     console.log("Sending Availabilities: ", allAvailabilities);
 
@@ -171,7 +190,7 @@ export const CalendarSchedule = ({ height }) => {
       if (error.response) {
         console.log("Server Error Response: ", error.response.data);
         toast.error(
-          `Error: ${
+          `${
             error.response.data ? error.response.data : "Something went wrong"
           }`
         );
@@ -220,7 +239,7 @@ export const CalendarSchedule = ({ height }) => {
         console.log("Response data:", response.data); //debug log
         toast.success("Availability updated successfully");
 
-        setReloadKey((prevKey) => prevKey + 1);//fetch updated availability.
+        setReloadKey((prevKey) => prevKey + 1); //fetch updated availability.
       }
     } catch (error) {
       console.log("Error: ", error); //debug log
@@ -228,8 +247,10 @@ export const CalendarSchedule = ({ height }) => {
     }
   };
 
-
-
+  // Show User Events
+  const handleMyEvents = () => {
+    navigate("/myevents", { state: { height: 500, userEvents: userEvents } });
+  };
   // -------------------------------------------------------------------------------------
   return (
     <div className="p-6  bg-gray-100 dark:bg-gray-800">
@@ -238,13 +259,23 @@ export const CalendarSchedule = ({ height }) => {
         <h2 className="text-2xl md:text-3xl  dark:text-white mb-4">
           Upcoming Events
         </h2>
-        {/* Availability btn */}
-        <button
-          onClick={() => toast.info("Select day(s) to set availability")}
-          className="bg-blue-500 hover:bg-blue-700 text-white dark:text-white font-bold  h-10/12 py-2  my-auto px-4 rounded-2xl"
-        >
-          Set Availability
-        </button>
+        <div className="">
+          {/* Availability btn */}
+          <button
+            onClick={() => toast.info("Select day(s) to set availability")}
+            className="bg-blue-500 hover:bg-blue-700 text-white dark:text-white font-bold  h-10/12 py-2  my-auto px-4 rounded-2xl"
+          >
+            Set Availability
+          </button>
+          {/* User Events  */}
+          <button
+            onClick={handleMyEvents}
+            type="button"
+            className="ml-5 bg-blue-500 hover:bg-blue-700 text-white dark:text-white font-bold  h-10/12 py-2  my-auto px-4 rounded-2xl"
+          >
+            My Events
+          </button>
+        </div>
       </div>
 
       <Calendar
@@ -264,6 +295,7 @@ export const CalendarSchedule = ({ height }) => {
         endAccessor="end"
         style={{ height: height }}
         dayPropGetter={dayPropGetter}
+        onView={handleCalendarView}
       />
 
       {/* Selected Event Modal */}

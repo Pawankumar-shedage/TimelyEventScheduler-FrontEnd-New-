@@ -27,12 +27,6 @@ export const EventDetailsModal = ({
     if (event) setLocalEvent({ ...event });
   }, [event]);
 
-  console.log("Event Details Modal", event);
-  // console.log(
-  //   "Event Details Modal",
-  //   event.end.toLocaleTimeString().slice(0, 5)
-  // );
-
   const handleSendEmail = (email) => {
     console.log("Email", email);
     window.open(`mailto:${email}`, "_blank");
@@ -75,6 +69,7 @@ export const EventDetailsModal = ({
       setNewAvlStartTime(fmtNewSt);
       setNewAvlEndTime(fmtNewEnd);
     }
+    console.log("Current Event ", localEvent);
   }, [localEvent]);
 
   const [submitDisabled, setSubmitDisabled] = useState(false);
@@ -151,7 +146,6 @@ export const EventDetailsModal = ({
     let endDateTime = formatLocalDateTime(new Date(localEvent.end));
 
     console.log(startDateTime, newAvlStartTime);
-    
 
     const [stHours, stMinutes] = newAvlStartTime.split(":");
     const [endHours, endMinutes] = newAvlEndTime.split(":");
@@ -177,14 +171,12 @@ export const EventDetailsModal = ({
     };
 
     console.log("Updated Availability-->: ", availability);
-    
 
     onUpdateAvailability(availability);
     onClose();
   };
 
   // Delete Availability -Event
-
   const deleteAvailability = () => {
     console.log(
       "Delete Availability: ",
@@ -196,9 +188,8 @@ export const EventDetailsModal = ({
   };
 
   const handleConfirmDelete = () => {
-
     console.log("handle confirm,Delete Availability: ", event.availabilityId);
-    
+
     setOpenInfoModal(false);
 
     onDeleteAvailability(event.availabilityId);
@@ -366,26 +357,28 @@ export const EventDetailsModal = ({
                   </p>
                 )}
                 {attendees.length > 0 && (
-                  <p>
-                    <strong>Attendees:</strong>{" "}
-                  </p>
+                  <>
+                    <p>
+                      <strong>Attendees:</strong>{" "}
+                    </p>
+                    <ul>
+                      {attendees.map((attendee, index) => (
+                        <li key={index}>
+                          <div className="flex justify-space-between">
+                            <div>{attendee.name}</div>
+                            {/* TODO: Send email */}
+                            <button
+                              //  onClick={handleSendEmail(attendee.email)}
+                              className="text-white mx-5 px-2 rounded bg-gray-500"
+                            >
+                              Email
+                            </button>
+                          </div>
+                        </li>
+                      ))}
+                    </ul>
+                  </>
                 )}
-                <ul>
-                  {attendees.map((attendee, index) => (
-                    <li key={index}>
-                      <div className="flex justify-space-between">
-                        <div>{attendee.name}</div>
-                        {/* TODO: Send email */}
-                        <button
-                          //  onClick={handleSendEmail(attendee.email)}
-                          className="text-white mx-5 px-2 rounded bg-gray-500"
-                        >
-                          Email
-                        </button>
-                      </div>
-                    </li>
-                  ))}
-                </ul>
                 {/* // footer */}
                 {/* <!-- Modal footer --> */}
                 <div className="flex justify-center p-4 md:p-5 border-t border-gray-200 rounded-b dark:border-gray-600">
