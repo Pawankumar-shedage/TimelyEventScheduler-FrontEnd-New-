@@ -33,7 +33,7 @@ export const Signup = () => {
 
     try {
       const response = await axios.post(
-        "http://localhost:4545/users/do-register",
+        "http://localhost:4545/public/do-register",
         formData
       );
 

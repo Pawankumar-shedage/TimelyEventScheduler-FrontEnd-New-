@@ -20,7 +20,7 @@ export const NavigationBar = () => {
   };
 
   return (
-    <nav className="bg-gray-100 w-full mx-auto border-b-2  border-gray-200 dark:bg-gray-900 dark:border-none">
+    <nav className="bg-gray-50 w-full mx-auto border-b-2  border-gray-200 dark:bg-gray-900 dark:border-none">
       <div className="max-w-screen-xl flex flex-wrap items-center justify-between mx-auto p-4">
 
         {/* Left Logo */}

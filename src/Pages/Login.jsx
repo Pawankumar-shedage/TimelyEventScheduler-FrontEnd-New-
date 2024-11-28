@@ -30,7 +30,7 @@ export const Login = () => {
 
     try {
       const response = await axios.post(
-        "http://localhost:4545/users/do-login",
+        "http://localhost:4545/public/do-login",
         formData
       );
 

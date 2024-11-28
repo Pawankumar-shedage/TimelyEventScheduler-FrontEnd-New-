@@ -356,7 +356,7 @@ export const EventDetailsModal = ({
                     <strong>Duration:</strong> {duration} minutes
                   </p>
                 )}
-                {attendees.length > 0 && (
+                {attendees && attendees.length > 0 && (
                   <>
                     <p>
                       <strong>Attendees:</strong>{" "}

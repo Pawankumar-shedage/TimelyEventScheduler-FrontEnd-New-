@@ -6,6 +6,7 @@ import { useState } from "react";
 import { Calendar, momentLocalizer } from "react-big-calendar";
 import { CustomCalendarToolbar } from "./CustomCalendarToolbar";
 import { useLocation } from "react-router-dom";
+import { EventDetailsModal } from "../Modals/EventDetailsModal";
 
 const localizer = momentLocalizer(moment);
 
@@ -36,6 +37,13 @@ export const MyEvents = () => {
     return {};
   };
 
+  const [selectedEvent, setSelectedEvent] = useState(null);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const handleSeletedEvent = (event) => {
+    setSelectedEvent(event);
+    setIsModalOpen(true);
+  }
+
   return (
     <div>
       <Calendar
@@ -47,7 +55,17 @@ export const MyEvents = () => {
         endAccessor="end"
         components={{ toolbar: CustomCalendarToolbar }}
         dayPropGetter={dayPropGetter}
+        onSelectEvent={handleSeletedEvent}
       />
+
+      {/* Selected Event Modal */}
+      {selectedEvent && (
+        <EventDetailsModal
+          isOpen={isModalOpen}
+          onClose={() => setIsModalOpen(false)}
+          event={selectedEvent}
+        />
+      )}
     </div>
   );
 };

@@ -1,7 +1,7 @@
-User 
-    Availability
-        Add  ✔
-        View ✔
+User                                                                
+    Availability                                                    
+        Add  ✔                                                      .
+        View                                                        
         Update 
         Delete ✔
 
@@ -12,5 +12,25 @@ Admin
         Update
         Delete
 
+Auth:
+    Secure storage of login credentials.(Oauth2)
+    
+Admin Dashboard
+    UserMng
+        1.Delete User
+        2.Change user role.
+    
+    Events
+
+    Availability
+
 Bugs/Issues
     Calendar : Availabilities[] persistence issue.
+
+
+
+-----------------
+TO LEARN :
+1.CI/CD
+2.MS Azure Cloud Deployment
+3.Testing (Java Selenium)
